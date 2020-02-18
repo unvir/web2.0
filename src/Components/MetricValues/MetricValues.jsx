@@ -5,7 +5,7 @@ import roundValue from "../../helpers/roundValue";
 import cn from "./MetricValues.less";
 
 type Props = {|
-    values: {
+    values?: {
         [metric: string]: number,
     },
     value: number,
