@@ -1,30 +1,32 @@
-// @flow
-import { Statuses } from "../../../Domain/Status";
-import type { Status } from "../../../Domain/Status";
-import variables from "./variables.less";
-
-const { okColor, errorColor, warnColor, noDataColor, unknownColor } = variables;
-
-export { unknownColor };
-
-export default function getStatusColor(status: Status): string {
-    if (status === Statuses.OK) {
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.unknownColor = void 0;
+var Status_1 = require("../../../Domain/Status");
+var variables_less_1 = __importDefault(require("./variables.less"));
+var okColor = variables_less_1.default.okColor, errorColor = variables_less_1.default.errorColor, warnColor = variables_less_1.default.warnColor, noDataColor = variables_less_1.default.noDataColor, unknownColor = variables_less_1.default.unknownColor;
+exports.unknownColor = unknownColor;
+function getStatusColor(status) {
+    if (status === Status_1.Statuses.OK) {
         return okColor;
     }
-    if (status === Statuses.NODATA) {
+    if (status === Status_1.Statuses.NODATA) {
         return noDataColor;
     }
-    if (status === Statuses.WARN) {
+    if (status === Status_1.Statuses.WARN) {
         return warnColor;
     }
-    if (status === Statuses.ERROR) {
+    if (status === Status_1.Statuses.ERROR) {
         return errorColor;
     }
-    if (status === Statuses.EXCEPTION) {
+    if (status === Status_1.Statuses.EXCEPTION) {
         return errorColor;
     }
-    if (status === Statuses.DEL) {
+    if (status === Status_1.Statuses.DEL) {
         return errorColor;
     }
     return "";
 }
+exports.default = getStatusColor;

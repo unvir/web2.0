@@ -1,12 +1,13 @@
-// @flow
-import { getUnixTime } from "date-fns";
-import { getUTCDate, humanizeDuration } from "./DateUtil";
-import { getMaintenanceCaption } from "../Domain/Maintenance";
-
-export default function checkMaintenance(maintenance: ?number): string {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var date_fns_1 = require("date-fns");
+var DateUtil_1 = require("./DateUtil");
+var Maintenance_1 = require("../Domain/Maintenance");
+function checkMaintenance(maintenance) {
     if (!maintenance) {
-        return getMaintenanceCaption("off");
+        return Maintenance_1.getMaintenanceCaption("off");
     }
-    const delta = maintenance - getUnixTime(getUTCDate());
-    return delta <= 0 ? getMaintenanceCaption("off") : humanizeDuration(delta);
+    var delta = maintenance - date_fns_1.getUnixTime(DateUtil_1.getUTCDate());
+    return delta <= 0 ? Maintenance_1.getMaintenanceCaption("off") : DateUtil_1.humanizeDuration(delta);
 }
+exports.default = checkMaintenance;

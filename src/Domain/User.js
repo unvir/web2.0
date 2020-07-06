@@ -1,4 +1,2 @@
-// @flow
-export type User = {|
-    [username: string]: string,
-|};
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });

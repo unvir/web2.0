@@ -1,11 +1,2 @@
-// @flow
-export interface Contact {
-    id: string;
-    type: string;
-    user: string;
-    value: string;
-}
-
-export interface ContactList {
-    list: Array<Contact>;
-}
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });

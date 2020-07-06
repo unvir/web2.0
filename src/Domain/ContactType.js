@@ -1,7 +1,7 @@
-// @flow
-import type { ContactConfig } from "./Config";
-
-export const ContactTypes = {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.getContactTypeCaption = exports.ContactTypes = void 0;
+exports.ContactTypes = {
     mail: "mail",
     email: "email",
     phone: "phone",
@@ -10,10 +10,9 @@ export const ContactTypes = {
     msteams: "msteams",
     slack: "slack",
     "twilio sms": "twilio sms",
-    "twilio voice": "twilio voice",
+    "twilio voice": "twilio voice"
 };
-
-const ContactTypeCaptions = {
+var ContactTypeCaptions = {
     mail: "EMail",
     email: "EMail",
     phone: "Phone",
@@ -22,12 +21,12 @@ const ContactTypeCaptions = {
     msteams: "Microsoft Teams",
     "twilio sms": "Twilio SMS",
     "twilio voice": "Twilio voice",
-    slack: "slack",
+    slack: "slack"
 };
-
-export function getContactTypeCaption(contactConfig: ContactConfig): string {
+function getContactTypeCaption(contactConfig) {
     if (ContactTypeCaptions[contactConfig.type] !== null) {
         return ContactTypeCaptions[contactConfig.type];
     }
     return contactConfig.type;
 }
+exports.getContactTypeCaption = getContactTypeCaption;

@@ -1,5 +1,7 @@
-// @flow
-export const PagesPaths = {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.getPageLink = exports.getPagePath = exports.PagesLinks = exports.PagesPaths = void 0;
+exports.PagesPaths = {
     index: "/",
     trigger: "/trigger/:id",
     triggerEdit: "/trigger/:id/edit",
@@ -8,10 +10,9 @@ export const PagesPaths = {
     settings: "/settings",
     notifications: "/notifications",
     tags: "/tags",
-    patterns: "/patterns",
+    patterns: "/patterns"
 };
-
-export const PagesLinks = {
+exports.PagesLinks = {
     index: "/",
     trigger: "/trigger/%id%",
     triggerEdit: "/trigger/%id%/edit",
@@ -21,17 +22,13 @@ export const PagesLinks = {
     notifications: "/notifications",
     tags: "/tags",
     patterns: "/patterns",
-    docs: "//moira.readthedocs.org/",
+    docs: "//moira.readthedocs.org/"
 };
-
-export type PagePath = $Keys<typeof PagesPaths>;
-
-export type PageLink = $Keys<typeof PagesLinks>;
-
-export function getPagePath(page: PagePath): string {
-    return PagesPaths[page];
+function getPagePath(page) {
+    return exports.PagesPaths[page];
 }
-
-export function getPageLink(page: PageLink, id?: string): string {
-    return id ? PagesLinks[page].replace("%id%", id) : PagesLinks[page];
+exports.getPagePath = getPagePath;
+function getPageLink(page, id) {
+    return id ? exports.PagesLinks[page].replace("%id%", id) : exports.PagesLinks[page];
 }
+exports.getPageLink = getPageLink;

@@ -1,35 +1,22 @@
-// @flow
-export const DaysOfWeek = {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.createSchedule = exports.WholeWeek = exports.DaysOfWeek = void 0;
+exports.DaysOfWeek = {
     Mon: "Mon",
     Tue: "Tue",
     Wed: "Wed",
     Thu: "Thu",
     Fri: "Fri",
     Sat: "Sat",
-    Sun: "Sun",
+    Sun: "Sun"
 };
-
-export type DayOfWeek = $Keys<typeof DaysOfWeek>;
-
-export interface Day {
-    enabled: boolean;
-    name: DayOfWeek;
-}
-
-export interface Schedule {
-    startOffset: number;
-    endOffset: number;
-    tzOffset: number;
-    days: Array<Day>;
-}
-
-export const WholeWeek: DayOfWeek[] = Object.keys(DaysOfWeek);
-
-export function createSchedule(days: DayOfWeek[]): Schedule {
+exports.WholeWeek = Object.keys(exports.DaysOfWeek);
+function createSchedule(days) {
     return {
-        days: Object.keys(DaysOfWeek).map(x => ({ enabled: days.includes(x), name: x })),
+        days: Object.keys(exports.DaysOfWeek).map(function (x) { return ({ enabled: days.includes(x), name: x }); }),
         tzOffset: new Date().getTimezoneOffset(),
         startOffset: 0,
-        endOffset: 1439,
+        endOffset: 1439
     };
 }
+exports.createSchedule = createSchedule;

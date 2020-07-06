@@ -1,6 +1,7 @@
-// @flow
+"use strict";
 /* eslint-disable import/prefer-default-export */
-
-export const purifyConfig = {
-    FORBID_TAGS: ["img"],
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.purifyConfig = void 0;
+exports.purifyConfig = {
+    FORBID_TAGS: ["img"]
 };

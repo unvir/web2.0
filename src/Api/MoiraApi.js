@@ -1,488 +1,817 @@
-// @flow
-import queryString from "query-string";
-import type { Config } from "../Domain/Config";
-import type { EventList } from "../Domain/Event";
-import type { Trigger, TriggerList, TriggerState } from "../Domain/Trigger";
-import type { Settings } from "../Domain/Settings";
-import type { TagStat } from "../Domain/Tag";
-import type { PatternList } from "../Domain/Pattern";
-import type { NotificationList } from "../Domain/Notification";
-import type { Contact, ContactList } from "../Domain/Contact";
-import type { ContactCreateInfo } from "../Domain/ContactCreateInfo";
-import type { Subscription } from "../Domain/Subscription";
-import type { Schedule } from "../Domain/Schedule";
-import type { NotifierState } from "../Domain/MoiraServiceStates";
-
-export type SubscriptionCreateInfo = {|
-    sched: Schedule,
-    tags: Array<string>,
-    throttling: boolean,
-    contacts: Array<string>,
-    enabled: boolean,
-    any_tags: boolean,
-    user: string,
-    id?: string,
-    ignore_recoverings: boolean,
-    ignore_warnings: boolean,
-    plotting?: {
-        enabled: boolean,
-        theme: "light" | "dark",
-    },
-|};
-
-export type TagList = {|
-    list: Array<string>,
-|};
-
-export type TagStatList = {|
-    list: Array<TagStat>,
-|};
-
-export interface IMoiraApi {
-    getSettings(): Promise<Settings>;
-    getConfig(): Promise<Config>;
-    getContactList(): Promise<ContactList>;
-    addContact(contact: ContactCreateInfo): Promise<Contact>;
-    updateContact(contact: Contact): Promise<Contact>;
-    testContact(contactId: string): Promise<void>;
-    addSubscription(subscription: SubscriptionCreateInfo): Promise<Subscription>;
-    updateSubscription(subscription: Subscription): Promise<Subscription>;
-    delSubscription(subscriptionId: string): Promise<void>;
-    testSubscription(subscriptionId: string): Promise<void>;
-    deleteContact(contactId: string): Promise<void>;
-    getPatternList(): Promise<PatternList>;
-    delPattern(pattern: string): Promise<void>;
-    getTagList(): Promise<TagList>;
-    getTagStats(): Promise<TagStatList>;
-    delTag(tag: string): Promise<void>;
-    getTriggerList(
-        page: number,
-        onlyProblems: boolean,
-        tags: Array<string>,
-        searchText: string
-    ): Promise<TriggerList>;
-    getTrigger(id: string, params: Object): Promise<Trigger>;
-    addTrigger(data: $Shape<Trigger>): Promise<{ [key: string]: string }>;
-    setTrigger(id: string, data: $Shape<Trigger>): Promise<{ [key: string]: string }>;
-    delTrigger(id: string): Promise<void>;
-    setMaintenance(
-        triggerId: string,
-        data: { trigger?: number, metrics?: { [metric: string]: number } }
-    ): Promise<void>;
-    getTriggerState(id: string): Promise<TriggerState>;
-    getTriggerEvents(id: string, page: number): Promise<EventList>;
-    delThrottling(triggerId: string): Promise<void>;
-    delMetric(triggerId: string, metric: string): Promise<void>;
-    delNoDataMetric(triggerId: string): Promise<void>;
-    getNotificationList(): Promise<NotificationList>;
-    delNotification(id: string): Promise<void>;
-    delAllNotifications(): Promise<void>;
-    delAllNotificationEvents(): Promise<void>;
-    getNotifierState(): Promise<NotifierState>;
-    setNotifierState(status: NotifierState): Promise<NotifierState>;
-}
-
-class ApiError extends Error {
-    status: number;
-
-    constructor({ message, status }) {
-        super(message);
-        this.name = "ApiError";
-        this.status = status;
-    }
-}
-
-const statusCode = {
-    NOT_FOUND: 404,
+"use strict";
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = function (d, b) {
+        extendStatics = Object.setPrototypeOf ||
+            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+            function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+        return extendStatics(d, b);
+    };
+    return function (d, b) {
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
 };
-
-export { statusCode };
-
-export default class MoiraApi implements IMoiraApi {
-    apiUrl: string;
-
-    config: Config;
-
-    triggerListPageSize: number = 20;
-
-    eventHistoryPageSize: number = 100;
-
-    constructor(apiUrl: string) {
+var __generator = (this && this.__generator) || function (thisArg, body) {
+    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g;
+    return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
+    function verb(n) { return function (v) { return step([n, v]); }; }
+    function step(op) {
+        if (f) throw new TypeError("Generator is already executing.");
+        while (_) try {
+            if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
+            if (y = 0, t) op = [op[0] & 2, t.value];
+            switch (op[0]) {
+                case 0: case 1: t = op; break;
+                case 4: _.label++; return { value: op[1], done: false };
+                case 5: _.label++; y = op[1]; op = [0]; continue;
+                case 7: op = _.ops.pop(); _.trys.pop(); continue;
+                default:
+                    if (!(t = _.trys, t = t.length > 0 && t[t.length - 1]) && (op[0] === 6 || op[0] === 2)) { _ = 0; continue; }
+                    if (op[0] === 3 && (!t || (op[1] > t[0] && op[1] < t[3]))) { _.label = op[1]; break; }
+                    if (op[0] === 6 && _.label < t[1]) { _.label = t[1]; t = op; break; }
+                    if (t && _.label < t[2]) { _.label = t[2]; _.ops.push(op); break; }
+                    if (t[2]) _.ops.pop();
+                    _.trys.pop(); continue;
+            }
+            op = body.call(thisArg, _);
+        } catch (e) { op = [6, e]; y = 0; } finally { f = t = 0; }
+        if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
+    }
+};
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.statusCode = void 0;
+var query_string_1 = __importDefault(require("query-string"));
+var ApiError = /** @class */ (function (_super) {
+    __extends(ApiError, _super);
+    function ApiError(_a) {
+        var message = _a.message, status = _a.status;
+        var _this = _super.call(this, message) || this;
+        _this.name = "ApiError";
+        _this.status = status;
+        return _this;
+    }
+    return ApiError;
+}(Error));
+var statusCode = {
+    NOT_FOUND: 404
+};
+exports.statusCode = statusCode;
+var MoiraApi = /** @class */ (function () {
+    function MoiraApi(apiUrl) {
+        this.triggerListPageSize = 20;
+        this.eventHistoryPageSize = 100;
         this.apiUrl = apiUrl;
     }
-
-    static async checkStatus(response: Response) {
-        if (!(response.status >= 200 && response.status < 300)) {
-            let serverResponse: { status: string, error: string } | null = null;
-            const errorText = await response.text();
-            try {
-                serverResponse = JSON.parse(errorText);
-            } catch (error) {
-                throw new ApiError({ message: errorText, status: response.status });
-            }
-            throw new ApiError({
-                message: serverResponse
-                    ? serverResponse.status +
-                      (serverResponse.error ? `: ${serverResponse.error}` : "")
-                    : errorText,
-                status: response.status,
+    MoiraApi.checkStatus = function (response) {
+        return __awaiter(this, void 0, void 0, function () {
+            var serverResponse, errorText;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        if (!!(response.status >= 200 && response.status < 300)) return [3 /*break*/, 2];
+                        serverResponse = null;
+                        return [4 /*yield*/, response.text()];
+                    case 1:
+                        errorText = _a.sent();
+                        try {
+                            serverResponse = JSON.parse(errorText);
+                        }
+                        catch (error) {
+                            throw new ApiError({ message: errorText, status: response.status });
+                        }
+                        throw new ApiError({
+                            message: serverResponse ? serverResponse.status + (serverResponse.error ? ": " + serverResponse.error : "") : errorText,
+                            status: response.status
+                        });
+                    case 2: return [2 /*return*/];
+                }
             });
-        }
-    }
-
-    async get<T>(url: string): Promise<T> {
-        const fullUrl = this.apiUrl + url;
-        const response = await fetch(fullUrl, {
-            method: "GET",
-            credentials: "same-origin",
         });
-        await MoiraApi.checkStatus(response);
-        return response.json();
-    }
-
-    getConfig(): Promise<Config> {
-        return this.get<Config>("/config");
-    }
-
-    async getSettings(): Promise<Settings> {
-        const result = await this.get<Settings>("/user/settings");
-        result.subscriptions.forEach(s => {
-            // eslint-disable-next-line no-param-reassign
-            s.tags = s.tags === null ? [] : s.tags;
+    };
+    MoiraApi.prototype.get = function (url) {
+        return __awaiter(this, void 0, void 0, function () {
+            var fullUrl, response;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        fullUrl = this.apiUrl + url;
+                        return [4 /*yield*/, fetch(fullUrl, {
+                                method: "GET",
+                                credentials: "same-origin"
+                            })];
+                    case 1:
+                        response = _a.sent();
+                        return [4 /*yield*/, MoiraApi.checkStatus(response)];
+                    case 2:
+                        _a.sent();
+                        return [2 /*return*/, response.json()];
+                }
+            });
         });
-        return result;
-    }
-
-    async getContactList(): Promise<ContactList> {
-        const url = `${this.apiUrl}/contact`;
-        const response = await fetch(url, {
-            method: "GET",
-            credentials: "same-origin",
+    };
+    MoiraApi.prototype.getConfig = function () {
+        return this.get("/config");
+    };
+    MoiraApi.prototype.getSettings = function () {
+        return __awaiter(this, void 0, void 0, function () {
+            var result;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4 /*yield*/, this.get("/user/settings")];
+                    case 1:
+                        result = _a.sent();
+                        result.subscriptions.forEach(function (s) {
+                            // eslint-disable-next-line no-param-reassign
+                            s.tags = s.tags === null ? [] : s.tags;
+                        });
+                        return [2 /*return*/, result];
+                }
+            });
         });
-        await MoiraApi.checkStatus(response);
-        return response.json();
-    }
-
-    async addContact(contact: ContactCreateInfo): Promise<Contact> {
-        const url = `${this.apiUrl}/contact`;
-        const response = await fetch(url, {
-            method: "PUT",
-            credentials: "same-origin",
-            body: JSON.stringify(contact),
+    };
+    MoiraApi.prototype.getContactList = function () {
+        return __awaiter(this, void 0, void 0, function () {
+            var url, response;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        url = this.apiUrl + "/contact";
+                        return [4 /*yield*/, fetch(url, {
+                                method: "GET",
+                                credentials: "same-origin"
+                            })];
+                    case 1:
+                        response = _a.sent();
+                        return [4 /*yield*/, MoiraApi.checkStatus(response)];
+                    case 2:
+                        _a.sent();
+                        return [2 /*return*/, response.json()];
+                }
+            });
         });
-        await MoiraApi.checkStatus(response);
-        return response.json();
-    }
-
-    async testContact(contactId: string) {
-        const url = `${this.apiUrl}/contact/${encodeURI(contactId)}/test`;
-        const response = await fetch(url, {
-            method: "POST",
-            credentials: "same-origin",
+    };
+    MoiraApi.prototype.addContact = function (contact) {
+        return __awaiter(this, void 0, void 0, function () {
+            var url, response;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        url = this.apiUrl + "/contact";
+                        return [4 /*yield*/, fetch(url, {
+                                method: "PUT",
+                                credentials: "same-origin",
+                                body: JSON.stringify(contact)
+                            })];
+                    case 1:
+                        response = _a.sent();
+                        return [4 /*yield*/, MoiraApi.checkStatus(response)];
+                    case 2:
+                        _a.sent();
+                        return [2 /*return*/, response.json()];
+                }
+            });
         });
-        await MoiraApi.checkStatus(response);
-    }
-
-    async updateContact(contact: Contact): Promise<Contact> {
-        const url = `${this.apiUrl}/contact/${encodeURI(contact.id)}`;
-        const response = await fetch(url, {
-            method: "PUT",
-            credentials: "same-origin",
-            body: JSON.stringify(contact),
+    };
+    MoiraApi.prototype.testContact = function (contactId) {
+        return __awaiter(this, void 0, void 0, function () {
+            var url, response;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        url = this.apiUrl + "/contact/" + encodeURI(contactId) + "/test";
+                        return [4 /*yield*/, fetch(url, {
+                                method: "POST",
+                                credentials: "same-origin"
+                            })];
+                    case 1:
+                        response = _a.sent();
+                        return [4 /*yield*/, MoiraApi.checkStatus(response)];
+                    case 2:
+                        _a.sent();
+                        return [2 /*return*/];
+                }
+            });
         });
-        await MoiraApi.checkStatus(response);
-        return response.json();
-    }
-
-    async addSubscription(subscription: SubscriptionCreateInfo): Promise<Subscription> {
-        const url = `${this.apiUrl}/subscription`;
-        if (subscription.id != null) {
-            throw new Error("InvalidProgramState: id of subscription must be null or undefined");
-        }
-        const response = await fetch(url, {
-            method: "PUT",
-            credentials: "same-origin",
-            body: JSON.stringify(subscription),
+    };
+    MoiraApi.prototype.updateContact = function (contact) {
+        return __awaiter(this, void 0, void 0, function () {
+            var url, response;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        url = this.apiUrl + "/contact/" + encodeURI(contact.id);
+                        return [4 /*yield*/, fetch(url, {
+                                method: "PUT",
+                                credentials: "same-origin",
+                                body: JSON.stringify(contact)
+                            })];
+                    case 1:
+                        response = _a.sent();
+                        return [4 /*yield*/, MoiraApi.checkStatus(response)];
+                    case 2:
+                        _a.sent();
+                        return [2 /*return*/, response.json()];
+                }
+            });
         });
-        await MoiraApi.checkStatus(response);
-        return response.json();
-    }
-
-    async updateSubscription(subscription: Subscription): Promise<Subscription> {
-        const url = `${this.apiUrl}/subscription/${encodeURI(subscription.id)}`;
-        const response = await fetch(url, {
-            method: "PUT",
-            credentials: "same-origin",
-            body: JSON.stringify(subscription),
+    };
+    MoiraApi.prototype.addSubscription = function (subscription) {
+        return __awaiter(this, void 0, void 0, function () {
+            var url, response;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        url = this.apiUrl + "/subscription";
+                        if (subscription.id != null) {
+                            throw new Error("InvalidProgramState: id of subscription must be null or undefined");
+                        }
+                        return [4 /*yield*/, fetch(url, {
+                                method: "PUT",
+                                credentials: "same-origin",
+                                body: JSON.stringify(subscription)
+                            })];
+                    case 1:
+                        response = _a.sent();
+                        return [4 /*yield*/, MoiraApi.checkStatus(response)];
+                    case 2:
+                        _a.sent();
+                        return [2 /*return*/, response.json()];
+                }
+            });
         });
-        await MoiraApi.checkStatus(response);
-        return response.json();
-    }
-
-    async testSubscription(subscriptionId: string) {
-        const url = `${this.apiUrl}/subscription/${encodeURI(subscriptionId)}/test`;
-        const response = await fetch(url, {
-            method: "PUT",
-            credentials: "same-origin",
+    };
+    MoiraApi.prototype.updateSubscription = function (subscription) {
+        return __awaiter(this, void 0, void 0, function () {
+            var url, response;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        url = this.apiUrl + "/subscription/" + encodeURI(subscription.id);
+                        return [4 /*yield*/, fetch(url, {
+                                method: "PUT",
+                                credentials: "same-origin",
+                                body: JSON.stringify(subscription)
+                            })];
+                    case 1:
+                        response = _a.sent();
+                        return [4 /*yield*/, MoiraApi.checkStatus(response)];
+                    case 2:
+                        _a.sent();
+                        return [2 /*return*/, response.json()];
+                }
+            });
         });
-        await MoiraApi.checkStatus(response);
-    }
-
-    async deleteContact(contactId: string) {
-        const url = `${this.apiUrl}/contact/${encodeURI(contactId)}`;
-        const response = await fetch(url, {
-            method: "DELETE",
-            credentials: "same-origin",
+    };
+    MoiraApi.prototype.testSubscription = function (subscriptionId) {
+        return __awaiter(this, void 0, void 0, function () {
+            var url, response;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        url = this.apiUrl + "/subscription/" + encodeURI(subscriptionId) + "/test";
+                        return [4 /*yield*/, fetch(url, {
+                                method: "PUT",
+                                credentials: "same-origin"
+                            })];
+                    case 1:
+                        response = _a.sent();
+                        return [4 /*yield*/, MoiraApi.checkStatus(response)];
+                    case 2:
+                        _a.sent();
+                        return [2 /*return*/];
+                }
+            });
         });
-        await MoiraApi.checkStatus(response);
-    }
-
-    async getPatternList(): Promise<PatternList> {
-        const url = `${this.apiUrl}/pattern`;
-        const response = await fetch(url, {
-            method: "GET",
-            credentials: "same-origin",
+    };
+    MoiraApi.prototype.deleteContact = function (contactId) {
+        return __awaiter(this, void 0, void 0, function () {
+            var url, response;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        url = this.apiUrl + "/contact/" + encodeURI(contactId);
+                        return [4 /*yield*/, fetch(url, {
+                                method: "DELETE",
+                                credentials: "same-origin"
+                            })];
+                    case 1:
+                        response = _a.sent();
+                        return [4 /*yield*/, MoiraApi.checkStatus(response)];
+                    case 2:
+                        _a.sent();
+                        return [2 /*return*/];
+                }
+            });
         });
-        await MoiraApi.checkStatus(response);
-        return response.json();
-    }
-
-    async delPattern(pattern: string) {
-        const url = `${this.apiUrl}/pattern/${encodeURI(pattern)}`;
-        const response = await fetch(url, {
-            method: "DELETE",
-            credentials: "same-origin",
+    };
+    MoiraApi.prototype.getPatternList = function () {
+        return __awaiter(this, void 0, void 0, function () {
+            var url, response;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        url = this.apiUrl + "/pattern";
+                        return [4 /*yield*/, fetch(url, {
+                                method: "GET",
+                                credentials: "same-origin"
+                            })];
+                    case 1:
+                        response = _a.sent();
+                        return [4 /*yield*/, MoiraApi.checkStatus(response)];
+                    case 2:
+                        _a.sent();
+                        return [2 /*return*/, response.json()];
+                }
+            });
         });
-        await MoiraApi.checkStatus(response);
-    }
-
-    async getTagList(): Promise<TagList> {
-        const url = `${this.apiUrl}/tag`;
-        const response = await fetch(url, {
-            method: "GET",
-            credentials: "same-origin",
+    };
+    MoiraApi.prototype.delPattern = function (pattern) {
+        return __awaiter(this, void 0, void 0, function () {
+            var url, response;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        url = this.apiUrl + "/pattern/" + encodeURI(pattern);
+                        return [4 /*yield*/, fetch(url, {
+                                method: "DELETE",
+                                credentials: "same-origin"
+                            })];
+                    case 1:
+                        response = _a.sent();
+                        return [4 /*yield*/, MoiraApi.checkStatus(response)];
+                    case 2:
+                        _a.sent();
+                        return [2 /*return*/];
+                }
+            });
         });
-        await MoiraApi.checkStatus(response);
-        return response.json();
-    }
-
-    async getTagStats(): Promise<TagStatList> {
-        const url = `${this.apiUrl}/tag/stats`;
-        const response = await fetch(url, {
-            method: "GET",
-            credentials: "same-origin",
+    };
+    MoiraApi.prototype.getTagList = function () {
+        return __awaiter(this, void 0, void 0, function () {
+            var url, response;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        url = this.apiUrl + "/tag";
+                        return [4 /*yield*/, fetch(url, {
+                                method: "GET",
+                                credentials: "same-origin"
+                            })];
+                    case 1:
+                        response = _a.sent();
+                        return [4 /*yield*/, MoiraApi.checkStatus(response)];
+                    case 2:
+                        _a.sent();
+                        return [2 /*return*/, response.json()];
+                }
+            });
         });
-        await MoiraApi.checkStatus(response);
-        return response.json();
-    }
-
-    async delTag(tag: string) {
-        const url = `${this.apiUrl}/tag/${encodeURI(tag)}`;
-        const response = await fetch(url, {
-            method: "DELETE",
-            credentials: "same-origin",
+    };
+    MoiraApi.prototype.getTagStats = function () {
+        return __awaiter(this, void 0, void 0, function () {
+            var url, response;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        url = this.apiUrl + "/tag/stats";
+                        return [4 /*yield*/, fetch(url, {
+                                method: "GET",
+                                credentials: "same-origin"
+                            })];
+                    case 1:
+                        response = _a.sent();
+                        return [4 /*yield*/, MoiraApi.checkStatus(response)];
+                    case 2:
+                        _a.sent();
+                        return [2 /*return*/, response.json()];
+                }
+            });
         });
-        await MoiraApi.checkStatus(response);
-    }
-
-    async getTriggerList(
-        page: number,
-        onlyProblems: boolean,
-        tags: Array<string>,
-        searchText: string
-    ): Promise<TriggerList> {
-        const url = `${this.apiUrl}/trigger/search?${queryString.stringify(
-            {
-                /* eslint-disable */
-                p: page,
-                /* eslint-enable */
-                size: this.triggerListPageSize,
-                tags,
-                onlyProblems,
-                text: searchText,
-            },
-            { arrayFormat: "index", encode: true }
-        )}`;
-        const response = await fetch(url, {
-            method: "GET",
-            credentials: "same-origin",
+    };
+    MoiraApi.prototype.delTag = function (tag) {
+        return __awaiter(this, void 0, void 0, function () {
+            var url, response;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        url = this.apiUrl + "/tag/" + encodeURI(tag);
+                        return [4 /*yield*/, fetch(url, {
+                                method: "DELETE",
+                                credentials: "same-origin"
+                            })];
+                    case 1:
+                        response = _a.sent();
+                        return [4 /*yield*/, MoiraApi.checkStatus(response)];
+                    case 2:
+                        _a.sent();
+                        return [2 /*return*/];
+                }
+            });
         });
-        await MoiraApi.checkStatus(response);
-        return response.json();
-    }
-
-    async getTrigger(id: string, params: Object): Promise<Trigger> {
-        const url = `${this.apiUrl}/trigger/${encodeURI(id)}${
-            params ? `?${queryString.stringify(params)}` : ""
-        }`;
-
-        const response = await fetch(url, {
-            method: "GET",
-            credentials: "same-origin",
+    };
+    MoiraApi.prototype.getTriggerList = function (page, onlyProblems, tags, searchText) {
+        return __awaiter(this, void 0, void 0, function () {
+            var url, response;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        url = this.apiUrl + "/trigger/search?" + query_string_1.default.stringify({
+                            /* eslint-disable */
+                            p: page,
+                            /* eslint-enable */
+                            size: this.triggerListPageSize,
+                            tags: tags,
+                            onlyProblems: onlyProblems,
+                            text: searchText
+                        }, { arrayFormat: "index", encode: true });
+                        return [4 /*yield*/, fetch(url, {
+                                method: "GET",
+                                credentials: "same-origin"
+                            })];
+                    case 1:
+                        response = _a.sent();
+                        return [4 /*yield*/, MoiraApi.checkStatus(response)];
+                    case 2:
+                        _a.sent();
+                        return [2 /*return*/, response.json()];
+                }
+            });
         });
-        await MoiraApi.checkStatus(response);
-        return response.json();
-    }
-
-    async addTrigger(data: $Shape<Trigger>): Promise<{ [key: string]: string }> {
-        const url = `${this.apiUrl}/trigger`;
-        const response = await fetch(url, {
-            method: "PUT",
-            body: JSON.stringify(data),
-            credentials: "same-origin",
+    };
+    MoiraApi.prototype.getTrigger = function (id, params) {
+        return __awaiter(this, void 0, void 0, function () {
+            var url, response;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        url = this.apiUrl + "/trigger/" + encodeURI(id) + (params ? "?" + query_string_1.default.stringify(params) : "");
+                        return [4 /*yield*/, fetch(url, {
+                                method: "GET",
+                                credentials: "same-origin"
+                            })];
+                    case 1:
+                        response = _a.sent();
+                        return [4 /*yield*/, MoiraApi.checkStatus(response)];
+                    case 2:
+                        _a.sent();
+                        return [2 /*return*/, response.json()];
+                }
+            });
         });
-        await MoiraApi.checkStatus(response);
-        return response.json();
-    }
-
-    async setTrigger(id: string, data: $Shape<Trigger>): Promise<{ [key: string]: string }> {
-        const url = `${this.apiUrl}/trigger/${encodeURI(id)}`;
-        const response = await fetch(url, {
-            method: "PUT",
-            body: JSON.stringify(data),
-            credentials: "same-origin",
+    };
+    MoiraApi.prototype.addTrigger = function (data) {
+        return __awaiter(this, void 0, void 0, function () {
+            var url, response;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        url = this.apiUrl + "/trigger";
+                        return [4 /*yield*/, fetch(url, {
+                                method: "PUT",
+                                body: JSON.stringify(data),
+                                credentials: "same-origin"
+                            })];
+                    case 1:
+                        response = _a.sent();
+                        return [4 /*yield*/, MoiraApi.checkStatus(response)];
+                    case 2:
+                        _a.sent();
+                        return [2 /*return*/, response.json()];
+                }
+            });
         });
-        await MoiraApi.checkStatus(response);
-        return response.json();
-    }
-
-    async delTrigger(id: string) {
-        const url = `${this.apiUrl}/trigger/${encodeURI(id)}`;
-        const response = await fetch(url, {
-            method: "DELETE",
-            credentials: "same-origin",
+    };
+    MoiraApi.prototype.setTrigger = function (id, data) {
+        return __awaiter(this, void 0, void 0, function () {
+            var url, response;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        url = this.apiUrl + "/trigger/" + encodeURI(id);
+                        return [4 /*yield*/, fetch(url, {
+                                method: "PUT",
+                                body: JSON.stringify(data),
+                                credentials: "same-origin"
+                            })];
+                    case 1:
+                        response = _a.sent();
+                        return [4 /*yield*/, MoiraApi.checkStatus(response)];
+                    case 2:
+                        _a.sent();
+                        return [2 /*return*/, response.json()];
+                }
+            });
         });
-        await MoiraApi.checkStatus(response);
-    }
-
-    async setMaintenance(
-        triggerId: string,
-        data: { trigger?: number, metrics?: { [metric: string]: number } }
-    ) {
-        const url = `${this.apiUrl}/trigger/${encodeURI(triggerId)}/setMaintenance`;
-        const response = await fetch(url, {
-            method: "PUT",
-            body: JSON.stringify(data),
-            credentials: "same-origin",
+    };
+    MoiraApi.prototype.delTrigger = function (id) {
+        return __awaiter(this, void 0, void 0, function () {
+            var url, response;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        url = this.apiUrl + "/trigger/" + encodeURI(id);
+                        return [4 /*yield*/, fetch(url, {
+                                method: "DELETE",
+                                credentials: "same-origin"
+                            })];
+                    case 1:
+                        response = _a.sent();
+                        return [4 /*yield*/, MoiraApi.checkStatus(response)];
+                    case 2:
+                        _a.sent();
+                        return [2 /*return*/];
+                }
+            });
         });
-        await MoiraApi.checkStatus(response);
-    }
-
-    async getTriggerState(id: string): Promise<TriggerState> {
-        const url = `${this.apiUrl}/trigger/${encodeURI(id)}/state`;
-        const response = await fetch(url, {
-            method: "GET",
-            credentials: "same-origin",
+    };
+    MoiraApi.prototype.setMaintenance = function (triggerId, data) {
+        return __awaiter(this, void 0, void 0, function () {
+            var url, response;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        url = this.apiUrl + "/trigger/" + encodeURI(triggerId) + "/setMaintenance";
+                        return [4 /*yield*/, fetch(url, {
+                                method: "PUT",
+                                body: JSON.stringify(data),
+                                credentials: "same-origin"
+                            })];
+                    case 1:
+                        response = _a.sent();
+                        return [4 /*yield*/, MoiraApi.checkStatus(response)];
+                    case 2:
+                        _a.sent();
+                        return [2 /*return*/];
+                }
+            });
         });
-        await MoiraApi.checkStatus(response);
-        return response.json();
-    }
-
-    async getTriggerEvents(id: string, page: number): Promise<EventList> {
-        const url = `${this.apiUrl}/event/${encodeURI(id)}?p=${page}&size=${
-            this.eventHistoryPageSize
-        }`;
-        const response = await fetch(url, {
-            method: "GET",
-            credentials: "same-origin",
+    };
+    MoiraApi.prototype.getTriggerState = function (id) {
+        return __awaiter(this, void 0, void 0, function () {
+            var url, response;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        url = this.apiUrl + "/trigger/" + encodeURI(id) + "/state";
+                        return [4 /*yield*/, fetch(url, {
+                                method: "GET",
+                                credentials: "same-origin"
+                            })];
+                    case 1:
+                        response = _a.sent();
+                        return [4 /*yield*/, MoiraApi.checkStatus(response)];
+                    case 2:
+                        _a.sent();
+                        return [2 /*return*/, response.json()];
+                }
+            });
         });
-        await MoiraApi.checkStatus(response);
-        return response.json();
-    }
-
-    async delThrottling(triggerId: string) {
-        const url = `${this.apiUrl}/trigger/${encodeURI(triggerId)}/throttling`;
-        const response = await fetch(url, {
-            method: "DELETE",
-            credentials: "same-origin",
+    };
+    MoiraApi.prototype.getTriggerEvents = function (id, page) {
+        return __awaiter(this, void 0, void 0, function () {
+            var url, response;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        url = this.apiUrl + "/event/" + encodeURI(id) + "?p=" + page + "&size=" + this.eventHistoryPageSize;
+                        return [4 /*yield*/, fetch(url, {
+                                method: "GET",
+                                credentials: "same-origin"
+                            })];
+                    case 1:
+                        response = _a.sent();
+                        return [4 /*yield*/, MoiraApi.checkStatus(response)];
+                    case 2:
+                        _a.sent();
+                        return [2 /*return*/, response.json()];
+                }
+            });
         });
-        await MoiraApi.checkStatus(response);
-    }
-
-    async delMetric(triggerId: string, metric: string) {
-        const url = `${this.apiUrl}/trigger/${encodeURI(triggerId)}/metrics?name=${encodeURI(
-            metric
-        )}`;
-        const response = await fetch(url, {
-            method: "DELETE",
-            credentials: "same-origin",
+    };
+    MoiraApi.prototype.delThrottling = function (triggerId) {
+        return __awaiter(this, void 0, void 0, function () {
+            var url, response;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        url = this.apiUrl + "/trigger/" + encodeURI(triggerId) + "/throttling";
+                        return [4 /*yield*/, fetch(url, {
+                                method: "DELETE",
+                                credentials: "same-origin"
+                            })];
+                    case 1:
+                        response = _a.sent();
+                        return [4 /*yield*/, MoiraApi.checkStatus(response)];
+                    case 2:
+                        _a.sent();
+                        return [2 /*return*/];
+                }
+            });
         });
-        await MoiraApi.checkStatus(response);
-    }
-
-    async delNoDataMetric(triggerId: string) {
-        const url = `${this.apiUrl}/trigger/${encodeURI(triggerId)}/metrics/nodata`;
-        const response = await fetch(url, {
-            method: "DELETE",
-            credentials: "same-origin",
+    };
+    MoiraApi.prototype.delMetric = function (triggerId, metric) {
+        return __awaiter(this, void 0, void 0, function () {
+            var url, response;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        url = this.apiUrl + "/trigger/" + encodeURI(triggerId) + "/metrics?name=" + encodeURI(metric);
+                        return [4 /*yield*/, fetch(url, {
+                                method: "DELETE",
+                                credentials: "same-origin"
+                            })];
+                    case 1:
+                        response = _a.sent();
+                        return [4 /*yield*/, MoiraApi.checkStatus(response)];
+                    case 2:
+                        _a.sent();
+                        return [2 /*return*/];
+                }
+            });
         });
-        await MoiraApi.checkStatus(response);
-    }
-
-    async getNotificationList(): Promise<NotificationList> {
-        const url = `${this.apiUrl}/notification?start=0&end=-1`;
-        const response = await fetch(url, {
-            method: "GET",
-            credentials: "same-origin",
+    };
+    MoiraApi.prototype.delNoDataMetric = function (triggerId) {
+        return __awaiter(this, void 0, void 0, function () {
+            var url, response;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        url = this.apiUrl + "/trigger/" + encodeURI(triggerId) + "/metrics/nodata";
+                        return [4 /*yield*/, fetch(url, {
+                                method: "DELETE",
+                                credentials: "same-origin"
+                            })];
+                    case 1:
+                        response = _a.sent();
+                        return [4 /*yield*/, MoiraApi.checkStatus(response)];
+                    case 2:
+                        _a.sent();
+                        return [2 /*return*/];
+                }
+            });
         });
-        await MoiraApi.checkStatus(response);
-        return response.json();
-    }
-
-    async delNotification(id: string) {
-        const url = `${this.apiUrl}/notification?id=${encodeURI(id)}`;
-        const response = await fetch(url, {
-            method: "DELETE",
-            credentials: "same-origin",
+    };
+    MoiraApi.prototype.getNotificationList = function () {
+        return __awaiter(this, void 0, void 0, function () {
+            var url, response;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        url = this.apiUrl + "/notification?start=0&end=-1";
+                        return [4 /*yield*/, fetch(url, {
+                                method: "GET",
+                                credentials: "same-origin"
+                            })];
+                    case 1:
+                        response = _a.sent();
+                        return [4 /*yield*/, MoiraApi.checkStatus(response)];
+                    case 2:
+                        _a.sent();
+                        return [2 /*return*/, response.json()];
+                }
+            });
         });
-        await MoiraApi.checkStatus(response);
-    }
-
-    async delAllNotifications() {
-        const url = `${this.apiUrl}/notification/all`;
-        const response = await fetch(url, {
-            method: "DELETE",
-            credentials: "same-origin",
+    };
+    MoiraApi.prototype.delNotification = function (id) {
+        return __awaiter(this, void 0, void 0, function () {
+            var url, response;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        url = this.apiUrl + "/notification?id=" + encodeURI(id);
+                        return [4 /*yield*/, fetch(url, {
+                                method: "DELETE",
+                                credentials: "same-origin"
+                            })];
+                    case 1:
+                        response = _a.sent();
+                        return [4 /*yield*/, MoiraApi.checkStatus(response)];
+                    case 2:
+                        _a.sent();
+                        return [2 /*return*/];
+                }
+            });
         });
-        await MoiraApi.checkStatus(response);
-    }
-
-    async delAllNotificationEvents() {
-        const url = `${this.apiUrl}/event/all`;
-        const response = await fetch(url, {
-            method: "DELETE",
-            credentials: "same-origin",
+    };
+    MoiraApi.prototype.delAllNotifications = function () {
+        return __awaiter(this, void 0, void 0, function () {
+            var url, response;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        url = this.apiUrl + "/notification/all";
+                        return [4 /*yield*/, fetch(url, {
+                                method: "DELETE",
+                                credentials: "same-origin"
+                            })];
+                    case 1:
+                        response = _a.sent();
+                        return [4 /*yield*/, MoiraApi.checkStatus(response)];
+                    case 2:
+                        _a.sent();
+                        return [2 /*return*/];
+                }
+            });
         });
-        await MoiraApi.checkStatus(response);
-    }
-
-    async delSubscription(subscriptionId: string) {
-        const url = `${this.apiUrl}/subscription/${encodeURI(subscriptionId)}`;
-        const response = await fetch(url, {
-            method: "DELETE",
-            credentials: "same-origin",
+    };
+    MoiraApi.prototype.delAllNotificationEvents = function () {
+        return __awaiter(this, void 0, void 0, function () {
+            var url, response;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        url = this.apiUrl + "/event/all";
+                        return [4 /*yield*/, fetch(url, {
+                                method: "DELETE",
+                                credentials: "same-origin"
+                            })];
+                    case 1:
+                        response = _a.sent();
+                        return [4 /*yield*/, MoiraApi.checkStatus(response)];
+                    case 2:
+                        _a.sent();
+                        return [2 /*return*/];
+                }
+            });
         });
-        await MoiraApi.checkStatus(response);
-    }
-
-    async getNotifierState(): Promise<NotifierState> {
-        const url = `${this.apiUrl}/health/notifier`;
-        const response = await fetch(url, {
-            method: "GET",
-            credentials: "same-origin",
+    };
+    MoiraApi.prototype.delSubscription = function (subscriptionId) {
+        return __awaiter(this, void 0, void 0, function () {
+            var url, response;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        url = this.apiUrl + "/subscription/" + encodeURI(subscriptionId);
+                        return [4 /*yield*/, fetch(url, {
+                                method: "DELETE",
+                                credentials: "same-origin"
+                            })];
+                    case 1:
+                        response = _a.sent();
+                        return [4 /*yield*/, MoiraApi.checkStatus(response)];
+                    case 2:
+                        _a.sent();
+                        return [2 /*return*/];
+                }
+            });
         });
-        await MoiraApi.checkStatus(response);
-        return response.json();
-    }
-
-    async setNotifierState(status: NotifierState): Promise<NotifierState> {
-        const url = `${this.apiUrl}/health/notifier`;
-        const response = await fetch(url, {
-            method: "PUT",
-            credentials: "same-origin",
-            body: JSON.stringify(status),
+    };
+    MoiraApi.prototype.getNotifierState = function () {
+        return __awaiter(this, void 0, void 0, function () {
+            var url, response;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        url = this.apiUrl + "/health/notifier";
+                        return [4 /*yield*/, fetch(url, {
+                                method: "GET",
+                                credentials: "same-origin"
+                            })];
+                    case 1:
+                        response = _a.sent();
+                        return [4 /*yield*/, MoiraApi.checkStatus(response)];
+                    case 2:
+                        _a.sent();
+                        return [2 /*return*/, response.json()];
+                }
+            });
         });
-        await MoiraApi.checkStatus(response);
-        return response.json();
-    }
-}
+    };
+    MoiraApi.prototype.setNotifierState = function (status) {
+        return __awaiter(this, void 0, void 0, function () {
+            var url, response;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        url = this.apiUrl + "/health/notifier";
+                        return [4 /*yield*/, fetch(url, {
+                                method: "PUT",
+                                credentials: "same-origin",
+                                body: JSON.stringify(status)
+                            })];
+                    case 1:
+                        response = _a.sent();
+                        return [4 /*yield*/, MoiraApi.checkStatus(response)];
+                    case 2:
+                        _a.sent();
+                        return [2 /*return*/, response.json()];
+                }
+            });
+        });
+    };
+    return MoiraApi;
+}());
+exports.default = MoiraApi;

@@ -1,7 +1,2 @@
-// @flow
-export type MoiraUrlParams = {|
-    page: number,
-    tags: Array<string>,
-    searchText: ?string,
-    onlyProblems: boolean,
-|};
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });

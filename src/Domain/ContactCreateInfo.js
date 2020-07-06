@@ -1,6 +1,2 @@
-// @flow
-export type ContactCreateInfo = {
-    value: string,
-    type: string,
-    user: string,
-};
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
