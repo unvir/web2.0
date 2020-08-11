@@ -1,5 +1,3 @@
-import { $Shape } from "utility-types";
-
 import * as React from "react";
 import { Button } from "@skbkontur/react-ui/components/Button";
 import { Center } from "@skbkontur/react-ui/components/Center";
@@ -13,63 +11,71 @@ import ContactEditModal from "../ContactEditModal/ContactEditModal";
 import ContactTypeIcon from "../ContactTypeIcon/ContactTypeIcon";
 import cn from "./ContactList.less";
 
-type Props = $Exact<{
-  items: Array<Contact>;
-  contactDescriptions: Array<ContactConfig>;
-  onTestContact: (arg0: Contact) => Promise<void>;
-  onAddContact: (arg0: $Shape<Contact>) => Promise<Contact | null | undefined>;
-  onUpdateContact: (arg0: Contact) => Promise<void>;
-  onRemoveContact: (arg0: Contact) => Promise<void>;
-}>;
+type Props = {
+    items: Array<Contact>;
+    contactDescriptions: Array<ContactConfig>;
+    onTestContact: (arg0: Contact) => Promise<void>;
+    onAddContact: (arg0: Partial<Contact>) => Promise<Contact | null | undefined>;
+    onUpdateContact: (arg0: Contact) => Promise<void>;
+    onRemoveContact: (arg0: Contact) => Promise<void>;
+};
 
 type State = {
-  newContactModalVisible: boolean;
-  newContact: $Shape<Contact> | null;
-  editContactModalVisible: boolean;
-  editableContact: Contact | null;
+    newContactModalVisible: boolean;
+    newContact: Partial<Contact> | null;
+    editContactModalVisible: boolean;
+    editableContact: Contact | null;
 };
 
 export default class ContactList extends React.Component<Props, State> {
+    state: State = {
+        newContactModalVisible: false,
+        newContact: null,
+        editContactModalVisible: false,
+        editableContact: null,
+    };
 
-  props: Props;
+    render(): React.ReactNode {
+        const { items, contactDescriptions, onRemoveContact } = this.props;
+        const {
+            newContact,
+            newContactModalVisible,
+            editContactModalVisible,
+            editableContact,
+        } = this.state;
 
-  state: State = {
-    newContactModalVisible: false,
-    newContact: null,
-    editContactModalVisible: false,
-    editableContact: null
-  };
-
-  render(): React.ReactElement<any> {
-    const {
-      items,
-      contactDescriptions,
-      onRemoveContact
-    } = this.props;
-    const {
-      newContact,
-      newContactModalVisible,
-      editContactModalVisible,
-      editableContact
-    } = this.state;
-
-    return <div>
-                {items.length > 0 ? <div>
+        return (
+            <div>
+                {items.length > 0 ? (
+                    <div>
                         <h3 className={cn("header")}>Delivery channels</h3>
                         <div className={cn("items-cotnainer")}>
                             <table className={cn("items")}>
                                 <tbody>
                                     {items.map(contact => {
-                if (contactDescriptions.some(description => description.type === contact.type)) {
-                  return <tr key={contact.id} className={cn("item")} onClick={() => this.handleBeginEditContact(contact)}>
+                                        if (
+                                            contactDescriptions.some(
+                                                description => description.type === contact.type
+                                            )
+                                        ) {
+                                            return (
+                                                <tr
+                                                    key={contact.id}
+                                                    className={cn("item")}
+                                                    onClick={() =>
+                                                        this.handleBeginEditContact(contact)
+                                                    }
+                                                >
                                                     <td className={cn("icon")}>
                                                         <ContactTypeIcon type={contact.type} />
                                                     </td>
                                                     <td>{contact.value}</td>
-                                                </tr>;
-                }
+                                                </tr>
+                                            );
+                                        }
 
-                return <tr className={cn("item")} key={contact.id}>
+                                        return (
+                                            <tr className={cn("item")} key={contact.id}>
                                                 <td className={cn("error-icon")}>
                                                     <WarningIcon />
                                                 </td>
@@ -78,13 +84,17 @@ export default class ContactList extends React.Component<Props, State> {
                                                     <span className={cn("error-message")}>
                                                         Contact type {contact.type} not more
                                                         support.{" "}
-                                                        <Button use="link" onClick={() => onRemoveContact(contact)}>
+                                                        <Button
+                                                            use="link"
+                                                            onClick={() => onRemoveContact(contact)}
+                                                        >
                                                             Delete
                                                         </Button>
                                                     </span>
                                                 </td>
-                                            </tr>;
-              })}
+                                            </tr>
+                                        );
+                                    })}
                                 </tbody>
                             </table>
                         </div>
@@ -93,165 +103,164 @@ export default class ContactList extends React.Component<Props, State> {
                                 Add delivery channel
                             </Button>
                         </div>
-                    </div> : this.renderEmptyListMessage()}
-                {newContactModalVisible && <NewContactModal contactDescriptions={contactDescriptions} contactInfo={newContact} onChange={this.handleChangeNewContact} onCancel={this.handleCancelCreateNewContact} onCreate={this.handleCreateNewContact} onCreateAndTest={this.handleCreateAndTestContact} />}
-                {editContactModalVisible && editableContact !== null && <ContactEditModal contactDescriptions={contactDescriptions} contactInfo={editableContact} onChange={this.handleChangeEditableContact} onCancel={this.handleCancelEditContact} onUpdate={this.handleUpdateContact} onUpdateAndTest={this.handleUpdateAndTestContact} onDelete={this.handleDeleteContact} />}
-            </div>;
-  }
-
-  handleCreateAndTestContact = async () => {
-    const {
-      onAddContact,
-      onTestContact
-    } = this.props;
-    const {
-      newContact
-    } = this.state;
-    if (newContact === null || newContact === undefined) {
-      throw new Error("InvalidProgramState");
+                    </div>
+                ) : (
+                    this.renderEmptyListMessage()
+                )}
+                {newContactModalVisible && (
+                    <NewContactModal
+                        contactDescriptions={contactDescriptions}
+                        contactInfo={newContact}
+                        onChange={this.handleChangeNewContact}
+                        onCancel={this.handleCancelCreateNewContact}
+                        onCreate={this.handleCreateNewContact}
+                        onCreateAndTest={this.handleCreateAndTestContact}
+                    />
+                )}
+                {editContactModalVisible && editableContact !== null && (
+                    <ContactEditModal
+                        contactDescriptions={contactDescriptions}
+                        contactInfo={editableContact}
+                        onChange={this.handleChangeEditableContact}
+                        onCancel={this.handleCancelEditContact}
+                        onUpdate={this.handleUpdateContact}
+                        onUpdateAndTest={this.handleUpdateAndTestContact}
+                        onDelete={this.handleDeleteContact}
+                    />
+                )}
+            </div>
+        );
     }
-    try {
-      const contact = await onAddContact(newContact);
-      if (contact !== null && contact !== undefined) {
-        await onTestContact(contact);
-      }
-    } finally {
-      this.setState({
-        newContactModalVisible: false,
-        newContact: null
-      });
-    }
-  };
 
-  handleCancelCreateNewContact = () => {
-    this.setState({
-      newContactModalVisible: false,
-      newContact: null
-    });
-  };
+    handleCreateAndTestContact = async (): Promise<void> => {
+        const { onAddContact, onTestContact } = this.props;
+        const { newContact } = this.state;
+        if (newContact === null || newContact === undefined) {
+            throw new Error("InvalidProgramState");
+        }
+        try {
+            const contact = await onAddContact(newContact);
+            if (contact !== null && contact !== undefined) {
+                await onTestContact(contact);
+            }
+        } finally {
+            this.setState({
+                newContactModalVisible: false,
+                newContact: null,
+            });
+        }
+    };
 
-  handleChangeNewContact = (newContactUpdate: $Shape<Contact>) => {
-    const {
-      newContact
-    } = this.state;
-    this.setState({
-      newContact: { ...newContact, ...newContactUpdate }
-    });
-  };
+    handleCancelCreateNewContact = (): void => {
+        this.setState({
+            newContactModalVisible: false,
+            newContact: null,
+        });
+    };
 
-  handleCreateNewContact = async () => {
-    const {
-      onAddContact
-    } = this.props;
-    const {
-      newContact
-    } = this.state;
-    if (newContact == null) {
-      throw new Error("InvalidProgramState");
-    }
-    try {
-      await onAddContact(newContact);
-    } finally {
-      this.setState({
-        newContactModalVisible: false,
-        newContact: null
-      });
-    }
-  };
+    handleChangeNewContact = (newContactUpdate: Partial<Contact>): void => {
+        const { newContact } = this.state;
+        this.setState({
+            newContact: { ...newContact, ...newContactUpdate },
+        });
+    };
 
-  handleDeleteContact = async () => {
-    const {
-      onRemoveContact
-    } = this.props;
-    const {
-      editableContact
-    } = this.state;
-    if (editableContact == null) {
-      throw new Error("InvalidProgramState");
-    }
-    try {
-      await onRemoveContact(editableContact);
-    } finally {
-      this.setState({
-        editContactModalVisible: false,
-        editableContact: null
-      });
-    }
-  };
+    handleCreateNewContact = async (): Promise<void> => {
+        const { onAddContact } = this.props;
+        const { newContact } = this.state;
+        if (newContact == null) {
+            throw new Error("InvalidProgramState");
+        }
+        try {
+            await onAddContact(newContact);
+        } finally {
+            this.setState({
+                newContactModalVisible: false,
+                newContact: null,
+            });
+        }
+    };
 
-  handleAddContact = () => {
-    this.setState({
-      newContactModalVisible: true
-    });
-  };
+    handleDeleteContact = async (): Promise<void> => {
+        const { onRemoveContact } = this.props;
+        const { editableContact } = this.state;
+        if (editableContact == null) {
+            throw new Error("InvalidProgramState");
+        }
+        try {
+            await onRemoveContact(editableContact);
+        } finally {
+            this.setState({
+                editContactModalVisible: false,
+                editableContact: null,
+            });
+        }
+    };
 
-  handleBeginEditContact = (contact: Contact) => {
-    this.setState({
-      editContactModalVisible: true,
-      editableContact: contact
-    });
-  };
+    handleAddContact = (): void => {
+        this.setState({
+            newContactModalVisible: true,
+        });
+    };
 
-  handleChangeEditableContact = (contactUpdate: $Shape<Contact>) => {
-    const {
-      editableContact
-    } = this.state;
-    this.setState({
-      editableContact: { ...editableContact, ...contactUpdate }
-    });
-  };
+    handleBeginEditContact = (contact: Contact): void => {
+        this.setState({
+            editContactModalVisible: true,
+            editableContact: contact,
+        });
+    };
 
-  handleCancelEditContact = () => {
-    this.setState({
-      editContactModalVisible: false,
-      editableContact: null
-    });
-  };
+    handleChangeEditableContact = (contactUpdate: Partial<Contact>): void => {
+        const { editableContact } = this.state;
+        // TODO: обсудить возможности решения. Несовместимость типов: Contact и Partial<Contact>
+        this.setState({
+            editableContact: { ...editableContact, ...contactUpdate },
+        });
+    };
 
-  handleUpdateContact = async () => {
-    const {
-      onUpdateContact
-    } = this.props;
-    const {
-      editableContact
-    } = this.state;
-    if (editableContact == null) {
-      throw new Error("InvalidProgramState");
-    }
-    try {
-      await onUpdateContact(editableContact);
-    } finally {
-      this.setState({
-        editContactModalVisible: false,
-        editableContact: null
-      });
-    }
-  };
+    handleCancelEditContact = (): void => {
+        this.setState({
+            editContactModalVisible: false,
+            editableContact: null,
+        });
+    };
 
-  handleUpdateAndTestContact = async () => {
-    const {
-      onUpdateContact,
-      onTestContact
-    } = this.props;
-    const {
-      editableContact
-    } = this.state;
-    if (editableContact == null) {
-      throw new Error("InvalidProgramState");
-    }
-    try {
-      await onUpdateContact(editableContact);
-      await onTestContact(editableContact);
-    } finally {
-      this.setState({
-        editContactModalVisible: false,
-        editableContact: null
-      });
-    }
-  };
+    handleUpdateContact = async (): Promise<void> => {
+        const { onUpdateContact } = this.props;
+        const { editableContact } = this.state;
+        if (editableContact == null) {
+            throw new Error("InvalidProgramState");
+        }
+        try {
+            await onUpdateContact(editableContact);
+        } finally {
+            this.setState({
+                editContactModalVisible: false,
+                editableContact: null,
+            });
+        }
+    };
 
-  renderEmptyListMessage(): React.ReactNode {
-    return <Center>
+    handleUpdateAndTestContact = async (): Promise<void> => {
+        const { onUpdateContact, onTestContact } = this.props;
+        const { editableContact } = this.state;
+        if (editableContact == null) {
+            throw new Error("InvalidProgramState");
+        }
+        try {
+            await onUpdateContact(editableContact);
+            await onTestContact(editableContact);
+        } finally {
+            this.setState({
+                editContactModalVisible: false,
+                editableContact: null,
+            });
+        }
+    };
+
+    renderEmptyListMessage(): React.ReactNode {
+        return (
+            <Center>
                 <Gapped vertical gap={20}>
                     <div>
                         To start receiving notifications you have to{" "}
@@ -266,6 +275,7 @@ export default class ContactList extends React.Component<Props, State> {
                         </Button>
                     </Center>
                 </Gapped>
-            </Center>;
-  }
+            </Center>
+        );
+    }
 }
