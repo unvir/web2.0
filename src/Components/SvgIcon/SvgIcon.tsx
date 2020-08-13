@@ -1,16 +1,19 @@
-
 import * as React from "react";
 
 type Props = {
-  path: string;
-  size: number;
-  offsetTop: number;
+    path: React.FunctionComponent<React.SVGAttributes<SVGElement>> | string;
+    size: number;
+    offsetTop: number;
 };
 
-export default function SvgIcon({
-  path,
-  size,
-  offsetTop
-}: Props): React.ReactNode {
-  return <img alt="" src={path} width={size} height={size} style={{ position: "relative", top: offsetTop }} />;
+export default function SvgIcon({ path, size, offsetTop }: Props): React.ReactElement {
+    return (
+        <img
+            alt=""
+            src={path as string}
+            width={size}
+            height={size}
+            style={{ position: "relative", top: offsetTop }}
+        />
+    );
 }
