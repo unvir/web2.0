@@ -4,8 +4,8 @@ import ImportIcon from "@skbkontur/react-icons/Import";
 import cn from "./FileLoader.less";
 
 type FileLoaderProps = {
-    onLoad: (arg0: string, arg1: string) => void;
-    onError?: (arg0: string) => void;
+    onLoad: (arg0: string | ArrayBuffer | null, arg1: string) => void;
+    onError?: (arg0: DOMException | null) => void;
     children?: React.ReactNode;
 };
 
@@ -23,7 +23,7 @@ export default function FileLoader({
         const reader = new FileReader();
         reader.readAsText(file);
         reader.onload = () => onLoad(reader.result, file.name);
-        reader.onerror = () => onError(reader.error);
+        reader.onerror = () => onError && onError(reader.error);
         // enable import same file
         // eslint-disable-next-line no-param-reassign
         event.target.value = "";
